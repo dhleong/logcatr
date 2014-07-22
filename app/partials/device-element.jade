@@ -1,0 +1,6 @@
+a.device-element(ng-href="#devices/{{ info.id }}")
+    div(ng-hide="deviceImage")
+        .model {{ info.model }}
+        .manufacturer {{ info.manufacturer }}
+    img(ng-src="{{deviceImage}}", ng-if="deviceImage")
+    .id {{ info.id }}

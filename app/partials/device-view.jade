@@ -1,0 +1,5 @@
+.device(ng-controller='DeviceController')
+    h3 Device {{ id }}
+    .error(ng-hide="deviceAvailable") Device Unavailable
+    .logcat
+        logcat-entry(ng-repeat="entry in logcat", entry="entry")

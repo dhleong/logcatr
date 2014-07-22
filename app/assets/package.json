@@ -1,0 +1,39 @@
+{
+  "author": "Daniel Leong",
+  "name": "LogCatr",
+  "description": "",
+  "version": "0.0.1",
+  "homepage": "",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "index.html",
+  "node-main": "",
+  "single-instance": true,
+  "chromium-args": "",
+  "dom_storage_quota": 1024,
+  "window": {
+    "//": "screen settings",
+    "title": "LogCatr",
+    "icon": "link.png",
+    "toolbar": true,
+    "frame": true,
+    "position": "center",
+    "width": 1024,
+    "height": 768,
+    "min_width": 1024,
+    "min_height": 768,
+    "resizable": true,
+    "always-on-top": false,
+    "fullscreen": false
+  },
+  "dependencies": {
+    "adbkit": "^2.0.14",
+    "bluebird": "^2.2.2",
+    "htmlparser": "^1.7.7",
+    "request": "^2.37.0",
+    "soupselect": "^0.2.0"
+  }
+}

@@ -1,0 +1,6 @@
+div(ng-controller="DevicesController")
+    div(ng-show="!devices.length && !loading") No devices available
+    div(ng-show="!devices.length && loading") Searching for devices...
+    div(ng-show="error") Error: {{ error }}
+    ul.devices-list
+        device(ng-repeat="device in devices", info="device")
