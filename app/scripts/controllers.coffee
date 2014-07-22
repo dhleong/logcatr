@@ -79,10 +79,9 @@ angular.module('app.controllers', ['app.services'])
                 lastTimeout = setTimeout ->
                     $scope.$apply()
                 , 10
-            logcat.on 'end', ->
-                console.log 'stream ends!'
 
             logcat.on 'error', (err) ->
+                # catch the error to prevent rcashes
                 console.log err
 
         .catch ->
@@ -93,8 +92,8 @@ angular.module('app.controllers', ['app.services'])
     $scope.$on 'devices', (ev, devices) ->
         wasAvailable = $scope.deviceAvailable
         $scope.deviceAvailable = _.findWhere(devices, id: deviceId)?
-        console.log deviceId, 'vs', devices
-        console.log 'deviceAvailable?', $scope.deviceAvailable, 'was=', wasAvailable
+        # console.log deviceId, 'vs', devices
+        # console.log 'deviceAvailable?', $scope.deviceAvailable, 'was=', wasAvailable
 
         if not wasAvailable and $scope.deviceAvailable
             # wasn't available, but is now
@@ -102,5 +101,6 @@ angular.module('app.controllers', ['app.services'])
             restartLogcat()
 
     $scope.$on '$destroy', ->
+        # clean up after ourselves
         $scope?._logcat?.end()
 ])

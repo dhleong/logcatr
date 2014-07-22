@@ -59,4 +59,5 @@ angular.module('app.directives', [
         $scope.message = entry.tag
 
         # TODO detect json in the message
+        # TODO alternatively, detect stacktraces
         $scope.json = JSON.stringify(entry, undefined, 2)
