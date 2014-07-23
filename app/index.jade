@@ -31,9 +31,11 @@ html(lang='en', ng-app='app')
               span.icon-bar
               span.icon-bar
               span.icon-bar
-            a(href='/').brand LogCatr
+            a(href).brand LogCatr
             .nav-collapse
               div(ng-include="'/partials/nav.html'")
+            .nav-collapse(style="float:right;")
+              div(ng-include="'/partials/util.html'")
       .container.main-content
         div(ng-view)
       .push

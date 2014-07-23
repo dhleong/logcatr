@@ -43,7 +43,6 @@ angular.module('app.directives', [
             $scope.$apply()
 ])
         
-
 .directive 'logcatEntry', ->
     restrict: 'E'
     templateUrl: '/partials/logcat-entry.html'
@@ -55,9 +54,26 @@ angular.module('app.directives', [
         
         $scope.date = entry.date
         $scope.tag = entry.tag
-        # $scope.message = entry.message
-        $scope.message = entry.tag
+
+        message = entry.message
 
         # TODO detect json in the message
-        # TODO alternatively, detect stacktraces
-        $scope.json = JSON.stringify(entry, undefined, 2)
+        objStart = message.indexOf '{'
+        if ~objStart
+            objEnd = message.lastIndexOf '}'
+            if ~objEnd
+                try
+                    jsonRaw = message.substr objStart, objEnd
+                    $scope.json = JSON.stringify(JSON.parse(jsonRaw), undefined, 2)
+                    message = message.substr(0, objStart) + '(json)' + message.substr(objEnd+1)
+                catch error
+                    # not actual json obj... oh well
+
+        # detect stacktraces
+        if message.match /^\W*at/m
+            $scope.stacktrace = message
+            message = '(stacktrace)'
+
+        # TODO linkify URLs?
+
+        $scope.message = message

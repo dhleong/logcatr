@@ -48,6 +48,11 @@ class DeviceManager
         @attached = []
         @_tracker = null
 
+        @restart()
+
+    restart: =>
+        @tracker?.end() # just in case we already have one, kill it
+
         console.log 'DeviceManager!'
         $(@window).unload =>
             # cleanup
@@ -59,6 +64,7 @@ class DeviceManager
         .then (tracker) =>
             @_tracker = tracker
             tracker.on 'add', (device) =>
+                console.log 'add', device
                 @processNewDevice device if device.type is 'device'
             
             tracker.on 'change', (device) =>
@@ -68,6 +74,7 @@ class DeviceManager
                 @processNewDevice device if device.type is 'device'
 
             tracker.on 'remove', (device) =>
+                console.log 'remove', device
                 @devices = @devices.filter (victim) -> device.id != victim.id
                 @_dispatchApply()
 
@@ -95,7 +102,7 @@ class DeviceManager
                     @_dispatchApply()
 
     _dispatchApply: =>
-        console.log 'dispatch$apply:', @attached
+        console.log 'dispatch$apply:', @attached, @devices
         for $scope in @attached
             @timeout => $scope.devices = @devices
             $scope.$emit 'devices', @devices
@@ -108,11 +115,14 @@ class DeviceManager
         the array changes
         ###
         @attached.push $scope
+        console.log 'attach scope', @attached
         $scope.$on '$destroy', =>
             console.log 'old scope', @attached
             @attached = @attached.filter (victim) -> victim != $scope
             console.log 'new scope', @attached
         @_dispatchApply()
+
+    byId: (deviceId) => _.findWhere @devices, id: deviceId
 
 class ImageFetcher
 

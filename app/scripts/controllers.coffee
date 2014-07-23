@@ -1,8 +1,12 @@
 'use strict'
 
+{spawn} = require 'child_process'
 Logcat = require 'adbkit-logcat'
 Promise = require 'bluebird'
 LineStream = require('byline').LineStream
+
+MAX_APPLY_CLEAR = 1000
+MAX_SCROLLBACK = 1000
 
 ### Controllers ###
 
@@ -13,30 +17,55 @@ angular.module('app.controllers', ['app.services'])
   '$location'
   '$resource'
   '$rootScope'
+  'adbClient'
+  'devices'
 
-($scope, $location, $resource, $rootScope) ->
+($scope, $location, $resource, $rootScope, adb, devices) ->
 
-  # Uses the url to determine if the selected
-  # menu item should have the class active.
-  $scope.$location = $location
-  $scope.$watch('$location.path()', (path) ->
-    $scope.activeNavId = path || '/'
-  )
+    # Uses the url to determine if the selected
+    # menu item should have the class active.
+    $scope.$location = $location
+    $scope.$watch('$location.path()', (path) ->
+        $scope.activeNavId = path || '/'
+    )
 
-  # getClass compares the current url with the id.
-  # If the current url starts with the id it returns 'active'
-  # otherwise it will return '' an empty string. E.g.
-  #
-  #   # current url = '/products/1'
-  #   getClass('/products') # returns 'active'
-  #   getClass('/orders') # returns ''
-  #
-  $scope.getClass = (id) ->
-    # if $scope.activeNavId.substring(0, id.length) == id
-    if $scope.activeNavId is id
-      return 'active'
-    else
-      return ''
+    # getClass compares the current url with the id.
+    # If the current url starts with the id it returns 'active'
+    # otherwise it will return '' an empty string. E.g.
+    #
+    #   # current url = '/products/1'
+    #   getClass('/products') # returns 'active'
+    #   getClass('/orders') # returns ''
+    #
+    $scope.getClass = (id) ->
+        # if $scope.activeNavId.substring(0, id.length) == id
+        if $scope.activeNavId is id
+            return 'active'
+        else
+            return ''
+
+    $scope.installApk = ->
+        alert "Soon. Soon."
+
+    $scope.restartAdb = ->
+
+        $scope.restarting = true
+        console.log 'killing server...'
+        adb.kill()
+        .then ->
+            console.log 'killed server...'
+            adb.listDevices()
+
+        .then ->
+            console.log 'Restarted successfully!'
+            devices.restart()
+
+        .catch (err) ->
+            console.error err
+            alert "Unable to kill adb server...\n#{err}"
+
+        .finally ->
+            $scope.restarting = false
 
 ])
 
@@ -56,12 +85,13 @@ angular.module('app.controllers', ['app.services'])
 
 ($scope, $routeParams, adb, devices) ->
 
-    devices.attach $scope
-
     deviceId = $routeParams.deviceId
     $scope.id = deviceId
     $scope.logcat = []
+    $scope.completeLogcat = []
     $scope.deviceAvailable = false
+    $scope.lastApply = new Date().getTime()
+    $scope.logcatFilter = (entry) -> ~entry.tag.indexOf("minus")
 
     restartLogcat = ->
         # open logcat with the device
@@ -74,11 +104,24 @@ angular.module('app.controllers', ['app.services'])
             lastTimeout = -1
             logcat.on 'entry', (entry) ->
                 # console.log 'entry', entry
-                $scope.logcat.unshift entry
-                clearTimeout lastTimeout
-                lastTimeout = setTimeout ->
-                    $scope.$apply()
-                , 10
+                displayed = $scope.logcatFilter entry
+                $scope.completeLogcat.unshift entry
+                if displayed
+                    $scope.logcat.unshift entry
+
+                while $scope.completeLogcat.length > MAX_SCROLLBACK
+                    $scope.completeLogcat.pop()
+                while $scope.logcat.length > MAX_SCROLLBACK
+                    $scope.logcat.pop()
+
+                if displayed
+                    # now = new Date().getTime()
+                    # if now - $scope.lastApply < MAX_APPLY_CLEAR
+                    clearTimeout lastTimeout
+                    lastTimeout = setTimeout ->
+                        $scope.lastApply = new Date().getTime()
+                        $scope.$apply()
+                    , 50
 
             logcat.on 'error', (err) ->
                 # catch the error to prevent rcashes
@@ -91,7 +134,8 @@ angular.module('app.controllers', ['app.services'])
 
     $scope.$on 'devices', (ev, devices) ->
         wasAvailable = $scope.deviceAvailable
-        $scope.deviceAvailable = _.findWhere(devices, id: deviceId)?
+        $scope.device = _.findWhere(devices, id: deviceId)
+        $scope.deviceAvailable = $scope.device?
         # console.log deviceId, 'vs', devices
         # console.log 'deviceAvailable?', $scope.deviceAvailable, 'was=', wasAvailable
 
@@ -102,5 +146,9 @@ angular.module('app.controllers', ['app.services'])
 
     $scope.$on '$destroy', ->
         # clean up after ourselves
-        $scope?._logcat?.end()
+        console.log 'stop logcat stream'
+        $scope._logcat?.end()
+
+    # attach to the device manager service
+    devices.attach $scope
 ])
