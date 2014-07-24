@@ -13,14 +13,14 @@ MAX_SCROLLBACK = 1000
 angular.module('app.controllers', ['app.services'])
 
 .controller('AppCtrl', [
+  '$window'
+  '$timeout'
   '$scope'
   '$location'
-  '$resource'
-  '$rootScope'
   'adbClient'
   'devices'
 
-($scope, $location, $resource, $rootScope, adb, devices) ->
+($window, $timeout, $scope, $location, adb, devices) ->
 
     # Uses the url to determine if the selected
     # menu item should have the class active.
@@ -66,6 +66,25 @@ angular.module('app.controllers', ['app.services'])
 
         .finally ->
             $scope.restarting = false
+
+    # drag-and-drop APK install
+    $scope.dropping = no
+    $window.ondragover = (e) -> e.preventDefault()
+    $window.ondrop = (e) -> e.preventDefault()
+
+    # little dance to update angular state without jank
+    dropper = $('.dropper')
+    dropper.on 'dragover', ->
+        $timeout.cancel $scope.leaveTimeout
+        $timeout -> $scope.dropping = yes
+    dropper.on 'dragleave', -> $scope.leaveTimeout = $timeout -> $scope.dropping = no
+    dropper.on 'dragend', -> $timeout -> $scope.dropping = no
+    dropper.on 'drop', (e) ->
+        $timeout -> $scope.dropping = no
+        e.preventDefault()
+
+        data = e.originalEvent.dataTransfer
+        console.log 'drop!', file.path for file in data.files
 
 ])
 
@@ -184,4 +203,5 @@ angular.module('app.controllers', ['app.services'])
 
     # attach to the device manager service
     devices.attach $scope
+
 ])

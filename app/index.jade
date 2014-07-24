@@ -23,7 +23,7 @@ html(lang='en', ng-app='app')
     script(src='js/partials.js')
     script(src='js/app.js')
   body(ng-controller='AppCtrl')
-    .wrapper
+    .wrapper.dropper(ng-class="{dropping: dropping}")
       .navbar.navbar-static-top
         .navbar-inner
           .container
