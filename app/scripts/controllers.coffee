@@ -80,10 +80,11 @@ angular.module('app.controllers', ['app.services'])
 .controller('DeviceController', [
     '$scope'
     '$routeParams'
+    '$timeout'
     'adbClient'
     'devices'
 
-($scope, $routeParams, adb, devices) ->
+($scope, $routeParams, $timeout, adb, devices) ->
 
     deviceId = $routeParams.deviceId
     $scope.id = deviceId
@@ -91,7 +92,39 @@ angular.module('app.controllers', ['app.services'])
     $scope.completeLogcat = []
     $scope.deviceAvailable = false
     $scope.lastApply = new Date().getTime()
-    $scope.logcatFilter = (entry) -> ~entry.tag.indexOf("minus")
+    $scope.filter = ''
+
+    compileFilter = (raw) ->
+        cleaned = raw.replace(/tag:\w+\|?/g, '')
+        regex: if cleaned then new RegExp(cleaned, 'i') else null
+        tags: tag.replace(/tag:(\w+)\|?/, '$1') for tag in raw.match(/tag:\w+\|?/g) or []
+
+    # when we update filter, re-draw logcat
+    $scope.$watch 'filter', (newFilter) ->
+        if newFilter == ''
+            # don't bother evaluating... there's no filter.
+            #  To make it feel faster, though, let's do it in chunks
+            $scope.logcat = $scope.completeLogcat.slice(0, 10)
+            $timeout ->
+                $scope.logcat = $scope.completeLogcat.slice()
+            return
+
+        # pre-compile filter since we'll need it a lot
+        filter = compileFilter newFilter
+        console.log filter
+        $scope.logcat = ( entry for entry in $scope.completeLogcat \
+            when $scope.logcatFilter(entry, filter) )
+
+    # filter method
+    $scope.logcatFilter = (entry, filter=null) ->
+        filter = compileFilter($scope.filter) if not filter
+        if not filter.regex and not filter.tags
+            return true # no filter at all
+
+        if filter.regex and \
+                (entry.tag.match(filter.regex) or entry.message.match(filter.regex))
+            return true
+        return filter.tags.some (tag) -> ~entry.tag.toLowerCase().indexOf(tag)
 
     restartLogcat = ->
         # open logcat with the device

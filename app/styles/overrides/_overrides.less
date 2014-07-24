@@ -3,6 +3,11 @@ Place custom styles here. These styles should loaded after
 bootstrap, so they may override it's behavior.
 */
 
+@colorDebug: #A2DAF8;
+@colorInfo:  #A1F7A1;
+@colorWarn:  #F7CBA1;
+@colorError: #F78181;
+
 // Footer
 .footer {
   background-color: whitesmoke;
@@ -22,11 +27,58 @@ device {
     width: 150px;
     height: 200px;
     text-align: center;
+
 }
 
-.json {
+.device .filter {
+    float: right;
+}
+
+logcat-entry {
+
     display: block;
-    unicode-bidi: embed;
-    font-family: monospace;
-    white-space: pre;
+    overflow-x: hidden;
+    overflow-y: hidden;
+
+    .date {
+        width: 10%;
+        max-width: 70px;
+        padding: 10px;
+    }
+
+    .tag {
+        width: 20%;
+        max-width: 140px;
+        padding: 10px;
+    }
+
+    .json {
+        display: block;
+        unicode-bidi: embed;
+        font-family: monospace;
+        white-space: pre;
+        max-height: 400px;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    // priorities
+    .debug { background-color: @colorDebug; }
+    .info  { background-color: @colorInfo; }
+    .warn  { background-color: @colorWarn; }
+    .error { background-color: @colorError; }
+    .fatal { 
+        background-color: #d00;
+        color: #fff;
+    }
+
+    // make it easier to read blocks
+    &:nth-child(even) {
+        .verbose { background-color: #ddd; }
+        .debug { background-color: lighten(@colorDebug, 10%); }
+        .info  { background-color: lighten(@colorInfo, 10%); }
+        .warn  { background-color: lighten(@colorWarn, 10%); }
+        .error { background-color: lighten(@colorError, 10%); }
+    }
+
 }
