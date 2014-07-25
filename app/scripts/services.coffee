@@ -1,6 +1,7 @@
 'use strict'
 
 adbkit = require 'adbkit'
+ApkReader = require 'adbkit-apkreader'
 Promise = require 'bluebird'
 request = Promise.promisify require('request')
 htmlparser = require 'htmlparser'
@@ -49,6 +50,45 @@ class DeviceManager
         @_tracker = null
 
         @restart()
+
+    install: ($scope, apk) => @timeout =>
+        if apk.substr(-3) != 'apk'
+            alert "#{apk} is not an apk"
+            return
+
+        console.log 'install', apk
+        manifest = ApkReader.readFile(apk).readManifestSync()
+        if not manifest
+            alert "#{apk} is not a valid apk"
+            return
+
+        $scope.installProgress =
+            done: 0
+            total: @devices.length
+        $scope.installProgress.toCss = ->
+            width: 100 * ($scope.installProgress.done / $scope.installProgress.total) + '%'
+            'min-width': '65px'
+
+        Promise.map @devices, (device) =>
+            @adb.install(device.id, apk)
+            .then =>
+                launchers = manifest.application.launcherActivities
+                if launchers
+                    component = "#{manifest.package}/#{launchers[0].name}"
+                    @adb.startActivity device.id,
+                        component: component
+            .catch (err) ->
+                console.error err
+            .finally => @timeout =>
+                console.log 'installed (or failed)!'
+                $scope.installProgress.done++
+
+                if $scope.installProgress.done == $scope.installProgress.total
+                    @timeout ->
+                        # clear
+                        $scope.installProgress = undefined
+                        console.log 'install done!'
+                    , 1000
 
     restart: =>
         @tracker?.end() # just in case we already have one, kill it

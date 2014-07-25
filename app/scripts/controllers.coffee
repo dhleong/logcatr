@@ -45,7 +45,14 @@ angular.module('app.controllers', ['app.services'])
             return ''
 
     $scope.installApk = ->
-        alert "Soon. Soon."
+        container = $('#apk-dialog-container')
+        picker = $(container.children()[0])
+        picker.one 'change', (e) ->
+            apk = $(this).val()
+            devices.install $scope, apk
+
+        picker.trigger 'click'
+        return false
 
     $scope.restartAdb = ->
 
@@ -84,7 +91,14 @@ angular.module('app.controllers', ['app.services'])
         e.preventDefault()
 
         data = e.originalEvent.dataTransfer
-        console.log 'drop!', file.path for file in data.files
+        if not data.files
+            return
+
+        file = data.files[0]
+        if not file.path
+            return
+
+        devices.install $scope, file.path
 
 ])
 

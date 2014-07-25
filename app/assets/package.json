@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "adbkit": "^2.0.14",
+    "adbkit-apkreader": "^1.0.0",
     "bluebird": "^2.2.2",
     "htmlparser": "^1.7.7",
     "request": "^2.37.0",

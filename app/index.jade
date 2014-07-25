@@ -47,3 +47,10 @@ html(lang='en', ng-app='app')
             span(app-version)
           small &nbsp;|&nbsp;
           small(server-addr)
+          .progress(ng-show="installProgress")
+            // .bar(ng-style="{width: 100*(installDone/installTotal) + '%', 'min-width': '65px'}").
+            .bar(ng-style="installProgress.toCss()").
+                Installing...
+
+    #apk-dialog-container
+        input#apk-dialog(style="display: none;", type="file", accept=".apk")
